@@ -51,9 +51,11 @@ onresize = function () {
     canvas.width = innerWidth - 50;
     canvas.height = innerHeight - 50;
 }
-//Initialization
+//Canvas Initialization
 var canvas = document.getElementById("game");
 canvas.width = innerWidth - 20;
 canvas.height = innerHeight - 20;
 var ctx = canvas.getContext("2d");
-
+//all positions/sizes are stored as if the screen is this big, scaling happens later.
+var defaultX = 1280;
+var defaultY = 1024;
