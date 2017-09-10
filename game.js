@@ -48,8 +48,8 @@ onkeyup = function (e) {
 
 //handle orientation/size change
 onresize = function () {
-    canvas.width = innerWidth - 20;
-    canvas.height = innerHeight - 20;
+    canvas.width = innerWidth - 50;
+    canvas.height = innerHeight - 50;
 }
 //Initialization
 var canvas = document.getElementById("game");
