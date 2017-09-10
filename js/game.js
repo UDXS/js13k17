@@ -1,0 +1,1 @@
+var b = window.open("assets/brick1.html","b","width=200px,height=100px");
