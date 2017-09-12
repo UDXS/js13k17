@@ -3,7 +3,7 @@
 var left = false;
 var right = false;
 var down = false;
-onmousedown = function(e) {
+onmousedown = function (e) {
   down = true;
   if (e.clientX >= innerWidth / 2 && down) {
     left = false;
@@ -13,7 +13,7 @@ onmousedown = function(e) {
     right = false;
   }
 };
-onmousemove = function(e) {
+onmousemove = function (e) {
   if (e.clientX >= innerWidth / 2 && down) {
     left = false;
     right = true;
@@ -22,12 +22,12 @@ onmousemove = function(e) {
     right = false;
   }
 };
-onmouseup = function(e) {
+onmouseup = function (e) {
   down = false;
   left = false;
   right = false;
 };
-onkeydown = function(e) {
+onkeydown = function (e) {
   if (e.key === "ArrowLeft") {
     left = true;
     right = false;
@@ -37,7 +37,7 @@ onkeydown = function(e) {
     right = true;
   }
 };
-onkeyup = function(e) {
+onkeyup = function (e) {
   if (e.key === "ArrowLeft") {
     left = false;
   }
@@ -56,7 +56,7 @@ var ctx = canvas.getContext("2d");
 var defaultX = 1280;
 var defaultY = 1024;
 //handle orientation/size change
-onresize = function() {
+onresize = function () {
   canvas.width = innerWidth / 10 * 9;
   canvas.height = innerHeight / 10 * 9;
 }
@@ -66,6 +66,11 @@ onresize = function() {
 //TODO
 
 //Asset Loading (Running this section triggers the game loop)
+ctx.font = "72px Arial";
+ctx.fillStyle = "white";
+ctx.textAlign = "center";
+ctx.fillText("UDXS Fort Fracture", canvas.width / 2, canvas.height / 2);
+
 var loadingLeft = 7;
 var assets = {
   "assets/ball.png": new Image(),
@@ -87,10 +92,14 @@ for (var k in assets) {
 }
 var loadcheck;
 
-function onImagesLoaded() {
-  clearInterval(loadcheck);
+function startGame() {
   //Here, we clean the canvas from the loading and then registers the game loop with the browser repaint.
-  context.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   window.requestAnimationFrame(game);
 }
-loadcheck = setInterval(onImagesLoaded,100);
+
+function onImgLoad() {
+  clearInterval(loadcheck);
+  setTimeout(startGame, 4000);
+}
+loadcheck = setInterval(onImgLoad, 100);
