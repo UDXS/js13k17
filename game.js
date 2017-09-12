@@ -5,7 +5,7 @@
   var left = false;
   var right = false;
   var down = false;
-  onmousedown = function (e) {
+  onpointerdown = function (e) {
     down = true;
     if (e.clientX >= innerWidth / 2 && down) {
       left = false;
@@ -15,7 +15,7 @@
       right = false;
     }
   };
-  onmousemove = function (e) {
+  onpointermove = function (e) {
     if (e.clientX >= innerWidth / 2 && down) {
       left = false;
       right = true;
@@ -24,7 +24,7 @@
       right = false;
     }
   };
-  onmouseup = function (e) {
+  onpointereup = function (e) {
     down = false;
     left = false;
     right = false;
@@ -68,11 +68,13 @@
   var paddle = defaultX / 2;
 
   var ball = {
-    x: defaultX / 2,
-    y: (defaultY / 4) * 3,
-    dx: 0,
-    dy: 0
+    x: defaultX / 2 - 32,
+    y: (defaultY / 2) - 32,
+    dx: 1,
+    dy: 1
   };
+
+  var gameOver = false;
 
   function initialize() {
     //Place bricks
@@ -86,71 +88,140 @@
   }
 
   function drawTex(name, vX, vY) {
-    if (name === "assets/paddle.png") {
-      console.log(name, vX, vY)
-    }
     ctx.drawImage(assets[name], (vX / defaultX) * canvas.width, (vY / defaultY) * canvas.height, (assets[name].width / defaultX) * canvas.width, (assets[name].height / defaultX) * canvas.height);
   }
   //Helper function that does collisions
   function checkRectCol(ax, ay, aw, ah, bx, by, bw, bh) {
-
+    if (ax < bx + bw &&
+      ax + aw > bx &&
+      ay < by + bh &&
+      ah + ay > by) {
+      return true;
+    }
+    return false;
+  }
+  //Helper function that does with an array
+  function checkRectColArray(rectA, rectB) {
+    return checkRectCol(rectA[0], rectA[1], rectA[2], rectA[3], rectB[0], rectB[1], rectB[2], rectB[3]);
   }
   //This function checks if the ball has hit a wall and changes the velocity.
   function handleBallWalls() {
-
+    var lwall = [0, 0, 1, defaultY];
+    var rwall = [defaultX, 0, 1, defaultY];
+    var twall = [0, 0, defaultX, 1];
+    var bwall = [0, defaultY, defaultX, 1];
+    var ballArray = [ball.x, ball.y, 64, 64];
+    if (checkRectColArray(ballArray, lwall)) {
+      ball.dx = ball.dx * -1;
+      bounce.play();
+    }
+    if (checkRectColArray(ballArray, rwall)) {
+      ball.dx = ball.dx * -1;
+      bounce.play();
+    }
+    if (checkRectColArray(ballArray, twall)) {
+      ball.dy = ball.dy * -1;
+      bounce.play();
+    }
+    if (checkRectColArray(ballArray, bwall)) {
+      gameOver = true;
+    }
   }
   //This function checks for intersection between ball and paddle and changes the velocity.
   function handlePaddleBall() {
-
+    if (Math.abs((paddle + 128) - (ball.x + 32)) <= 128 && ball.y >= defaultY - 320) {
+      if (ball.y < defaultY - 192) {
+        ball.dy = ball.dy * -1;
+        bounce.play();
+      }
+    }
   }
+  var hits = 0;
+  //Quick fix for collision problems
+  var hitCooldown = 100;
   //This function checks for intersection between ball and the bricks, changes the velocity, and decrements the brick type by one
   function handleBrickBall() {
-
+    var ballArray = [ball.x, ball.y, 64, 64];
+    var brickArray = [0, 0, 128, 64];
+    for (var y = 0; y < 5; y++) {
+      for (var x = 0; x < 10; x++) {
+        brickArray[0] = x * 128;
+        brickArray[1] = y * 64;
+        if (checkRectColArray(ballArray, brickArray) && bricks[y][x] !== 0 && hitCooldown <= 0) {
+          ball.dy = ball.dy * -1;
+          bricks[y][x] = bricks[y][x] - 1;
+          hitCooldown = 100;
+          bounce.play()
+          if (bricks[y][x] === 0) {
+            hits = hits + 1;
+          }
+        }
+      }
+    }
   }
 
   //Function that runs every 10 ms, it is tied to update.
   function fixedUpdate() {
     //To avoid movement speed changes, the paddle movement code has been moved to fixedUpdate
     if (right && paddle <= 1280 - 256) {
-      paddle = paddle + 7;
+      paddle = paddle + 6;
     }
     if (left && paddle >= 0) {
-      paddle = paddle - 7;
+      paddle = paddle - 6;
     }
+    //Ball velocity processing
+    ball.x = ball.x + (ball.dx * 6);
+    ball.y = ball.y + (ball.dy * 6);
+    hitCooldown--;
   }
 
   var fixedUpdateTime = 10;
 
   function update(deltaTime) {
+    //Handle ball collisions
+    handleBallWalls();
+    handlePaddleBall();
+    handleBrickBall();
+
     //fixedUpdate is executed every 10ms
     fixedUpdateTime = fixedUpdateTime - deltaTime;
     if (fixedUpdateTime <= 0) {
       fixedUpdateTime = 10;
       fixedUpdate();
     }
-    //Handle ball collisions
-    handleBallWalls();
   }
 
   function render(deltaTime) {
     update(deltaTime);
     //Clear and draw the ball/paddle
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawTex("assets/paddle.png", paddle, defaultY - 128);
+    drawTex("assets/paddle.png", paddle, defaultY - 256);
     drawTex("assets/ball.png", ball.x, ball.y);
     //Draw the bricks
     for (var y = 0; y < 5; y++) {
       for (var x = 0; x < 10; x++) {
-        drawTex("assets/brick" + bricks[y][x] + ".png", x * 128, y * 64);
+        if (bricks[y][x] !== 0) {
+          drawTex("assets/brick" + bricks[y][x] + ".png", x * 128, y * 64);
+        }
       }
     }
-    requestAnimationFrame(render);
+    ctx.font = "18px Arial";
+    ctx.fillStyle = "white";
+    ctx.textAlign = "left";
+    ctx.fillText(hits + " Points", 0, canvas.height - 64);
+    if (!gameOver) {
+      requestAnimationFrame(render);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      alert("Game Over!\n\nYou scored " + hits + " points!\n\nThanks For Playing Fortress Fracture by UDXS\n\nI hope you enjoyed playing it as much as I did making it!\n\nFind out more about me, Davit Markarian @ udxs.me");
+    }
+
   }
   //Asset Loading (Running this section triggers the game loop)
   ctx.font = "24px Arial";
   ctx.fillStyle = "white";
   ctx.textAlign = "center";
-  ctx.fillText("UDXS Fort Fracture", canvas.width / 2, canvas.height / 2);
+  ctx.fillText("UDXS Fortress Fracture", canvas.width / 2, canvas.height / 2);
 
   var loadingLeft = 7;
   var assets = {
